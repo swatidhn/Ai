@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sakhi by Beautifully Broken</title>
+    <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background: linear-gradient(135deg, #dbeafe, #f3e8ff);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Main card container */
+        .chat-card {
+            display: flex;
+            flex-direction: column;
+            width: 420px;
+            height: 90vh;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            overflow: hidden;
+            animation: fadeIn 0.6s ease-in-out;
+        }
+
+        header {
+            text-align: center;
+            padding: 16px;
+            background: linear-gradient(135deg, #0a393d, #2ab17f);
+            color: #fff;
+        }
+
+        header img {
+            width: 60px;
+            margin-bottom: 6px;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            margin: 4px 0;
+            font-weight: bold;
+            color: #fdfdfd;
+        }
+
+        .chatbot-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #ffe082;
+        }
+
+        .tagline {
+            font-size: 0.95rem;
+            color: #cfeef0;
+            margin-top: 4px;
+        }
+
+        .chat-container {
+            flex: 1;
+            background: #ace590; /* restored to your chosen color */
+            padding: 14px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 10px 14px;
+            border-radius: 16px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            animation: fadeInUp 0.3s ease-in-out;
+        }
+
+        .user {
+            align-self: flex-end;
+            background: #2ab17f;
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+
+        .bot {
+            align-self: flex-start;
+            background: #e6fffa;
+            color: #0a393d;
+            border-bottom-left-radius: 4px;
+        }
+
+        .typing {
+            align-self: flex-start;
+            background: #e6fffa;
+            color: #0a393d;
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .typing img {
+            width: 18px;
+            height: 18px;
+            animation: bounce 1.2s infinite;
+        }
+
+        .input-area {
+            display: flex;
+            padding: 10px;
+            background: #fff;
+            border-top: 1px solid #ddd;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 16px;
+            outline: none;
+        }
+
+        .input-area button {
+            margin-left: 8px;
+            background: #2ab17f;
+            color: white;
+            border: none;
+            border-radius: 16px;
+            padding: 10px 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .input-area button:hover {
+            background: #22966b;
+        }
+
+        /* Animations */
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+<div class="chat-card">
+    <header>
+        <img src="{{ url_for('static', path='butterfly.png') }}" alt="Beautifully Broken Logo">
+         <h1>Sakhi</h1>
+        <div class="chatbot-name" style="color: #2bdf85;">✨ by Beautifully Broken</div>
+        <p class="tagline">💚 Your safe space for <strong>mental health</strong> conversations</p>
+    </header>
+
+    <div class="chat-container" id="chat-container"></div>
+
+    <form class="input-area" id="chat-form">
+        <input type="text" id="user-input" name="user_input" placeholder="Type your thoughts..." required>
+        <button type="submit">Send</button>
+    </form>
+</div>
+
+<script>
+    const form = document.getElementById("chat-form");
+    const chatContainer = document.getElementById("chat-container");
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const input = document.getElementById("user-input");
+        const userMessage = input.value.trim();
+        if (!userMessage) return;
+
+        // Show user message
+        const userDiv = document.createElement("div");
+        userDiv.className = "message user";
+        userDiv.textContent = userMessage;
+        chatContainer.appendChild(userDiv);
+
+        // Typing indicator with butterfly
+        const typingDiv = document.createElement("div");
+        typingDiv.className = "message typing";
+        typingDiv.innerHTML = `<img src="{{ url_for('static', path='butterfly.png') }}" alt="typing"> typing...`;
+        chatContainer.appendChild(typingDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+
+        // Send to backend
+        const response = await fetch("/", {
+            method: "POST",
+            body: new URLSearchParams({ "user_input": userMessage }),
+            headers: { "Content-Type": "application/x-www-form-urlencoded" }
+        });
+
+        const data = await response.json();
+
+        // Remove typing indicator
+        chatContainer.removeChild(typingDiv);
+
+        // Show bot message
+        const botDiv = document.createElement("div");
+        botDiv.className = "message bot";
+        botDiv.textContent = data.bot_response;
+        chatContainer.appendChild(botDiv);
+
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        input.value = "";
+    });
+</script>
+</body>
+</html>
